@@ -1,4 +1,4 @@
-LIBRARY     Filters.dll
+LIBRARY     FlipCam.dll
 EXPORTS
             DllMain                 PRIVATE
             DllGetClassObject       PRIVATE
