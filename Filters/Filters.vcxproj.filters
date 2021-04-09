@@ -7,6 +7,9 @@
     <ClCompile Include="Filters.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="gfx.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -21,6 +24,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Filters.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="font.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="gfx.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

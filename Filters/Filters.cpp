@@ -5,32 +5,34 @@
 #include <stdio.h>
 #include <olectl.h>
 #include <dvdmedia.h>
+#include <math.h>
 #include "filters.h"
+#include "gfx.h"
 
 //////////////////////////////////////////////////////////////////////////
 //  CVCam is the source filter which masquerades as a capture device
 //////////////////////////////////////////////////////////////////////////
-CUnknown * WINAPI CVCam::CreateInstance(LPUNKNOWN lpunk, HRESULT *phr)
+CUnknown* WINAPI CVCam::CreateInstance(LPUNKNOWN lpunk, HRESULT* phr)
 {
     ASSERT(phr);
-    CUnknown *punk = new CVCam(lpunk, phr);
+    CUnknown* punk = new CVCam(lpunk, phr);
     return punk;
 }
 
-CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) : 
+CVCam::CVCam(LPUNKNOWN lpunk, HRESULT* phr) :
     CSource(NAME("Virtual Cam"), lpunk, CLSID_VirtualCam)
 {
     ASSERT(phr);
     CAutoLock cAutoLock(&m_cStateLock);
     // Create the one and only output pin
-    m_paStreams = (CSourceStream **) new CVCamStream*[1];
-    m_paStreams[0] = new CVCamStream(phr, this, L"Virtual Cam");
+    m_paStreams = (CSourceStream**) new CVCamStream * [1];
+    m_paStreams[0] = new CVCamStream(phr, this, L"FlipCam");
 }
 
-HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
+HRESULT CVCam::QueryInterface(REFIID riid, void** ppv)
 {
     //Forward request for IAMStreamConfig & IKsPropertySet to the pin
-    if(riid == _uuidof(IAMStreamConfig) || riid == _uuidof(IKsPropertySet))
+    if (riid == _uuidof(IAMStreamConfig) || riid == _uuidof(IKsPropertySet))
         return m_paStreams[0]->QueryInterface(riid, ppv);
     else
         return CSource::QueryInterface(riid, ppv);
@@ -40,23 +42,23 @@ HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
 // CVCamStream is the one and only output pin of CVCam which handles 
 // all the stuff.
 //////////////////////////////////////////////////////////////////////////
-CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
-    CSourceStream(NAME("Virtual Cam"),phr, pParent, pPinName), m_pParent(pParent)
+CVCamStream::CVCamStream(HRESULT* phr, CVCam* pParent, LPCWSTR pPinName) :
+    CSourceStream(NAME("Virtual Cam"), phr, pParent, pPinName), m_pParent(pParent)
 {
-    // Set the default media type as 320x240x24@15
+    // Set the default media type as 1280x720x24@15
     GetMediaType(4, &m_mt);
 }
 
 CVCamStream::~CVCamStream()
 {
-} 
+}
 
-HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
-{   
+HRESULT CVCamStream::QueryInterface(REFIID riid, void** ppv)
+{
     // Standard OLE stuff
-    if(riid == _uuidof(IAMStreamConfig))
+    if (riid == _uuidof(IAMStreamConfig))
         *ppv = (IAMStreamConfig*)this;
-    else if(riid == _uuidof(IKsPropertySet))
+    else if (riid == _uuidof(IKsPropertySet))
         *ppv = (IKsPropertySet*)this;
     else
         return CSourceStream::QueryInterface(riid, ppv);
@@ -71,23 +73,41 @@ HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
 //  Camera device.
 //////////////////////////////////////////////////////////////////////////
 
-HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
+HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
 {
+    DECLARE_PTR(VIDEOINFOHEADER, pvi, m_mt.pbFormat);
+    ASSERT(pvi);
+
     REFERENCE_TIME rtNow;
-    
-    REFERENCE_TIME avgFrameTime = ((VIDEOINFOHEADER*)m_mt.pbFormat)->AvgTimePerFrame;
+    REFERENCE_TIME avgFrameTime = pvi->AvgTimePerFrame;
 
     rtNow = m_rtLastTime;
     m_rtLastTime += avgFrameTime;
     pms->SetTime(&rtNow, &m_rtLastTime);
     pms->SetSyncPoint(TRUE);
 
-    BYTE *pData;
-    long lDataLen;
+    BYTE* pData;
     pms->GetPointer(&pData);
-    lDataLen = pms->GetSize();
-    for(int i = 0; i < lDataLen; ++i)
-        pData[i] = rand();
+
+    int w = pvi->bmiHeader.biWidth;
+    int h = pvi->bmiHeader.biHeight;
+    Gfx gfx(pData, w, h);
+
+    for (int x = 0; x < w; x++) {
+        for (int y = 0; y < h; y++) {
+            gfx.putPixel(x, y, 255, 255, 255);
+        }
+    }
+
+    gfx.putPixel(0, 0, 0, 0, 0);
+    gfx.putRect(w - 10, h - 10, 50, 50, 0, 0, 255);
+    gfx.putRect(10, 10, 50, 50, 0, 255, 0);
+    gfx.putRect(-25, -25, 50, 50, 255, 0, 0);
+
+    //gfx.putRect(0, 0, w, h, 99, 99, 99);
+
+    gfx.putText(100, 100, "Hello, poggers!\npoggerslol\npoggeeersss", 0, 0, 0);
+
 
     return NOERROR;
 } // FillBuffer
@@ -129,8 +149,8 @@ HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt)
     pvi->bmiHeader.biCompression = BI_RGB;
     pvi->bmiHeader.biBitCount    = 24;
     pvi->bmiHeader.biSize       = sizeof(BITMAPINFOHEADER);
-    pvi->bmiHeader.biWidth      = 80 * iPosition;
-    pvi->bmiHeader.biHeight     = 60 * iPosition;
+    pvi->bmiHeader.biWidth      = BI_WIDTH_M  * iPosition;
+    pvi->bmiHeader.biHeight     = BI_HEIGHT_M * iPosition;
     pvi->bmiHeader.biPlanes     = 1;
     pvi->bmiHeader.biSizeImage  = GetBitmapSize(&pvi->bmiHeader);
     pvi->bmiHeader.biClrImportant = 0;
@@ -230,8 +250,8 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     pvi->bmiHeader.biCompression = BI_RGB;
     pvi->bmiHeader.biBitCount    = 24;
     pvi->bmiHeader.biSize       = sizeof(BITMAPINFOHEADER);
-    pvi->bmiHeader.biWidth      = 80 * iIndex;
-    pvi->bmiHeader.biHeight     = 60 * iIndex;
+    pvi->bmiHeader.biWidth      = BI_WIDTH_M * iIndex;
+    pvi->bmiHeader.biHeight     = BI_HEIGHT_M * iIndex;
     pvi->bmiHeader.biPlanes     = 1;
     pvi->bmiHeader.biSizeImage  = GetBitmapSize(&pvi->bmiHeader);
     pvi->bmiHeader.biClrImportant = 0;
@@ -247,6 +267,8 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     (*pmt)->lSampleSize = pvi->bmiHeader.biSizeImage;
     (*pmt)->cbFormat = sizeof(VIDEOINFOHEADER);
     
+
+    // DEPRICATED
     DECLARE_PTR(VIDEO_STREAM_CONFIG_CAPS, pvscc, pSCC);
     
     pvscc->guid = FORMAT_VideoInfo;
@@ -276,6 +298,7 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     pvscc->MaxFrameInterval = 50000000; // 0.2 fps
     pvscc->MinBitsPerSecond = (80 * 60 * 3 * 8) / 5;
     pvscc->MaxBitsPerSecond = 640 * 480 * 3 * 8 * 50;
+    // DEPRICATED
 
     return S_OK;
 }

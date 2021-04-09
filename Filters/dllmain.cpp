@@ -25,9 +25,9 @@
 STDAPI AMovieSetupRegisterServer( CLSID   clsServer, LPCWSTR szDescription, LPCWSTR szFileName, LPCWSTR szThreadingModel = L"Both", LPCWSTR szServerType     = L"InprocServer32" );
 STDAPI AMovieSetupUnregisterServer( CLSID clsServer );
 
-// {8E14549A-DB61-4309-AFA1-3578E927E933}
+// {F89EB97B-2A47-49B5-A1B1-5E530517CDF6}
 DEFINE_GUID(CLSID_VirtualCam,
-            0x8e14549a, 0xdb61, 0x4309, 0xaf, 0xa1, 0x35, 0x78, 0xe9, 0x27, 0xe9, 0x33);
+    0xf89eb97b, 0x2a47, 0x49b5, 0xa1, 0xb1, 0x5e, 0x53, 0x5, 0x17, 0xcd, 0xf6);
 
 const AMOVIESETUP_MEDIATYPE AMSMediaTypesVCam = 
 { 
@@ -51,7 +51,7 @@ const AMOVIESETUP_PIN AMSPinVCam=
 const AMOVIESETUP_FILTER AMSFilterVCam =
 {
     &CLSID_VirtualCam,  // Filter CLSID
-    L"Virtual Cam",     // String name
+    L"FlipCam",     // String name
     MERIT_DO_NOT_USE,      // Filter merit
     1,                     // Number pins
     &AMSPinVCam             // Pin details
@@ -60,7 +60,7 @@ const AMOVIESETUP_FILTER AMSFilterVCam =
 CFactoryTemplate g_Templates[] = 
 {
     {
-        L"Virtual Cam",
+        L"FlipCam",
         &CLSID_VirtualCam,
         CVCam::CreateInstance,
         NULL,
@@ -87,7 +87,7 @@ STDAPI RegisterFilters( BOOL bRegister )
     hr = CoInitialize(0);
     if(bRegister)
     {
-        hr = AMovieSetupRegisterServer(CLSID_VirtualCam, L"Virtual Cam", achFileName, L"Both", L"InprocServer32");
+        hr = AMovieSetupRegisterServer(CLSID_VirtualCam, L"FlipCam", achFileName, L"Both", L"InprocServer32");
     }
 
     if( SUCCEEDED(hr) )
@@ -104,7 +104,7 @@ STDAPI RegisterFilters( BOOL bRegister )
                 rf2.dwMerit = MERIT_DO_NOT_USE;
                 rf2.cPins = 1;
                 rf2.rgPins = &AMSPinVCam;
-                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual Cam", &pMoniker, &CLSID_VideoInputDeviceCategory, NULL, &rf2);
+                hr = fm->RegisterFilter(CLSID_VirtualCam, L"FlipCam", &pMoniker, &CLSID_VideoInputDeviceCategory, NULL, &rf2);
             }
             else
             {

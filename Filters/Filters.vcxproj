@@ -210,12 +210,15 @@
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Filters.cpp" />
+    <ClCompile Include="gfx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="FlipCam.def" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Filters.h" />
+    <ClInclude Include="font.h" />
+    <ClInclude Include="gfx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

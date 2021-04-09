@@ -2,6 +2,11 @@
 
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
+constexpr size_t BI_WIDTH_M = 320;
+constexpr size_t BI_HEIGHT_M = 180;
+//constexpr size_t BI_WIDTH_M = 80;
+//constexpr size_t BI_HEIGHT_M = 60;
+
 EXTERN_C const GUID CLSID_VirtualCam;
 
 class CVCamStream;
