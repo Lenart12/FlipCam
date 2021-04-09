@@ -13,6 +13,13 @@
 
 #pragma comment(lib, "winmm.lib")
 
+#ifdef DEBUG
+    #pragma comment(lib, "strmbasd.lib")
+#else
+    #pragma comment(lib, "strmbase.lib")
+#endif // DEBUG
+
+
 #define CreateComObject(clsid, iid, var) CoCreateInstance( clsid, NULL, CLSCTX_INPROC_SERVER, iid, (void **)&var);
 
 STDAPI AMovieSetupRegisterServer( CLSID   clsServer, LPCWSTR szDescription, LPCWSTR szFileName, LPCWSTR szThreadingModel = L"Both", LPCWSTR szServerType     = L"InprocServer32" );

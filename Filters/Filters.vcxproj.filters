@@ -25,7 +25,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Filters.def">
+    <CustomBuild Include="FlipCam.def">
       <Filter>Resource</Filter>
     </CustomBuild>
   </ItemGroup>

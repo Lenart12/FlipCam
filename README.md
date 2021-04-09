@@ -28,6 +28,16 @@ Differences from original version:
 
 ## How to use
 
+Register dll using the command
+```
+regsvr32 "$(SolutionDir)/bin/$(Platform)/$(Configuration)/FlipCam.dll"
+```
+and unregister with
+```
+regsvr32 /u "$(SolutionDir)/bin/$(Platform)/$(Configuration)/FlipCam.dll"
+```
+## or
+
 Use Widows 10 SDK GraphEdit or [GraphStudioNext](https://github.com/cplussharp/graph-studio-next).
 
 Locate "Virtual Cam" filter:
