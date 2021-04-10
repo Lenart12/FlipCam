@@ -13,6 +13,9 @@
     <ClCompile Include="config.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="grabber.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -36,6 +39,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="config.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="grabber.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>
