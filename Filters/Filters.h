@@ -1,11 +1,8 @@
 #pragma once
 
-#define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
+#include "config.h"
 
-constexpr size_t BI_WIDTH_M = 320;
-constexpr size_t BI_HEIGHT_M = 180;
-//constexpr size_t BI_WIDTH_M = 80;
-//constexpr size_t BI_HEIGHT_M = 60;
+#define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
 EXTERN_C const GUID CLSID_VirtualCam;
 
@@ -71,11 +68,11 @@ public:
     
 private:
     CVCam *m_pParent;
+    FlipCamConfig* fc_config;
     REFERENCE_TIME m_rtLastTime;
     HBITMAP m_hLogoBmp;
     CCritSec m_cSharedState;
     IReferenceClock *m_pClock;
-
 };
 
 

@@ -11,7 +11,7 @@ void Gfx::putPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b)
 	buffer[bufferIndex + 0] = b;
 }
 
-void Gfx::putText(int x0, int y0, const char* text, uint8_t r, uint8_t g, uint8_t b)
+void Gfx::putText(int x0, int y0, const char* text, uint8_t r, uint8_t g, uint8_t b, bool background)
 {
 	uint8_t font_w = FontUbuntu[0];
 	uint8_t font_h = FontUbuntu[1];
@@ -38,6 +38,9 @@ void Gfx::putText(int x0, int y0, const char* text, uint8_t r, uint8_t g, uint8_
 					if (*(glyph + byteI) & (1 << bitI)) {
 						putPixel(runningX + x, runningY + y, r, g, b);
 					}
+					else if (background) {
+						putPixel(runningX + x, runningY + y, 255-r, 255-g, 255-b);
+					}
 				}
 			}
 			runningX += font_w;
@@ -51,5 +54,15 @@ void Gfx::putRect(int x0, int y0, int w, int h, uint8_t r, uint8_t g, uint8_t b)
 		for (int x = x0; x < x0 + w; x++) {
 			putPixel(x, y, r, g, b);
 		}
+	}
+}
+
+void Gfx::fillScren(uint8_t r, uint8_t g, uint8_t b)
+{
+	size_t buffSize = width * 3 * height;
+	for (size_t i = 0; i < buffSize; i += 3) {
+		buffer[i + 2] = r;
+		buffer[i + 1] = g;
+		buffer[i]     = b;
 	}
 }

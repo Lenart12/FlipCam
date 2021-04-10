@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <olectl.h>
 #include <dvdmedia.h>
-#include <math.h>
+#include <fstream>
 #include "filters.h"
 #include "gfx.h"
 
@@ -24,6 +24,7 @@ CVCam::CVCam(LPUNKNOWN lpunk, HRESULT* phr) :
 {
     ASSERT(phr);
     CAutoLock cAutoLock(&m_cStateLock);
+
     // Create the one and only output pin
     m_paStreams = (CSourceStream**) new CVCamStream * [1];
     m_paStreams[0] = new CVCamStream(phr, this, L"FlipCam");
@@ -45,7 +46,18 @@ HRESULT CVCam::QueryInterface(REFIID riid, void** ppv)
 CVCamStream::CVCamStream(HRESULT* phr, CVCam* pParent, LPCWSTR pPinName) :
     CSourceStream(NAME("Virtual Cam"), phr, pParent, pPinName), m_pParent(pParent)
 {
-    // Set the default media type as 1280x720x24@15
+    std::string path = std::string(getenv("APPDATA")) + "\\FlipCam";
+
+    std::string configPath = path + "\\flipcam.cfg";
+    std::wifstream conf_fh(configPath, std::ios_base::in);
+    if (conf_fh.is_open()) {
+        std::wstring cfg;
+        getline(conf_fh, cfg);
+        fc_config = new FlipCamConfig(cfg);
+    }
+    else {
+        fc_config = new FlipCamConfig();
+    }
     GetMediaType(4, &m_mt);
 }
 
@@ -92,21 +104,44 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
     int w = pvi->bmiHeader.biWidth;
     int h = pvi->bmiHeader.biHeight;
     Gfx gfx(pData, w, h);
+    gfx.fillScren(0, 0x55, 0x55);
 
-    for (int x = 0; x < w; x++) {
-        for (int y = 0; y < h; y++) {
-            gfx.putPixel(x, y, 255, 255, 255);
+    if (fc_config->debug) {
+        
+        static float dbg_x = 0;
+        static float dbg_y = 0;
+        static int dbg_r = rand();
+        static int dbg_g = rand();
+        static int dbg_b = rand();
+        static int v_x = 1;
+        static int v_y = 1;
+        const  int dvd_w = 24 * 3;
+        const  int dvd_h = 32;
+        static float time_step = fc_config->timePerFrame / 100000.0;
+
+        gfx.putText(dbg_x, dbg_y, "DVD", dbg_r, dbg_g, dbg_b, true);
+        dbg_x += v_x * time_step;
+        dbg_y += v_y * time_step;
+
+        if (dbg_x < 0 || dbg_x + dvd_w >= w) {
+            dbg_x = (dbg_x <= 0) ? 0 : w - dvd_w - 1;
+            v_x *= -1;
+            dbg_r = rand();
+            dbg_g = rand();
+            dbg_b = rand();
         }
+        if (dbg_y < 0 || dbg_y + dvd_h >= h) {
+            dbg_y = (dbg_y <= 0) ? 0 : h - dvd_h - 1;
+            v_y *= -1;
+            dbg_r = rand();
+            dbg_g = rand();
+            dbg_b = rand();
+        }
+        
+        char debugln[60];
+        sprintf(debugln, "res:%dx%d@%lldfps\nvflip:%d\nhflip:%d\nrtNow:%lld", w, h, 10000000 / fc_config->timePerFrame, fc_config->vFlip, fc_config->hFlip, rtNow);
+        gfx.putText(0, 0, debugln, 0xff, 0x00, 0x00, true);
     }
-
-    gfx.putPixel(0, 0, 0, 0, 0);
-    gfx.putRect(w - 10, h - 10, 50, 50, 0, 0, 255);
-    gfx.putRect(10, 10, 50, 50, 0, 255, 0);
-    gfx.putRect(-25, -25, 50, 50, 255, 0, 0);
-
-    //gfx.putRect(0, 0, w, h, 99, 99, 99);
-
-    gfx.putText(100, 100, "Hello, poggers!\npoggerslol\npoggeeersss", 0, 0, 0);
 
 
     return NOERROR;
@@ -149,13 +184,13 @@ HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt)
     pvi->bmiHeader.biCompression = BI_RGB;
     pvi->bmiHeader.biBitCount    = 24;
     pvi->bmiHeader.biSize       = sizeof(BITMAPINFOHEADER);
-    pvi->bmiHeader.biWidth      = BI_WIDTH_M  * iPosition;
-    pvi->bmiHeader.biHeight     = BI_HEIGHT_M * iPosition;
+    pvi->bmiHeader.biWidth      = fc_config->width  * iPosition;
+    pvi->bmiHeader.biHeight     = fc_config->height * iPosition;
     pvi->bmiHeader.biPlanes     = 1;
     pvi->bmiHeader.biSizeImage  = GetBitmapSize(&pvi->bmiHeader);
     pvi->bmiHeader.biClrImportant = 0;
 
-    pvi->AvgTimePerFrame = 1000000;
+    pvi->AvgTimePerFrame = fc_config->timePerFrame;
 
     SetRectEmpty(&(pvi->rcSource)); // we want the whole image area rendered.
     SetRectEmpty(&(pvi->rcTarget)); // no particular destination rectangle
@@ -250,8 +285,8 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     pvi->bmiHeader.biCompression = BI_RGB;
     pvi->bmiHeader.biBitCount    = 24;
     pvi->bmiHeader.biSize       = sizeof(BITMAPINFOHEADER);
-    pvi->bmiHeader.biWidth      = BI_WIDTH_M * iIndex;
-    pvi->bmiHeader.biHeight     = BI_HEIGHT_M * iIndex;
+    pvi->bmiHeader.biWidth      = fc_config->width  * iIndex;
+    pvi->bmiHeader.biHeight     = fc_config->height * iIndex;
     pvi->bmiHeader.biPlanes     = 1;
     pvi->bmiHeader.biSizeImage  = GetBitmapSize(&pvi->bmiHeader);
     pvi->bmiHeader.biClrImportant = 0;

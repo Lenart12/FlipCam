@@ -9,6 +9,8 @@
 #include <streams.h>
 #include <initguid.h>
 #include <dllsetup.h>
+#include <fstream>
+#include <cstdio>
 #include "filters.h"
 
 #pragma comment(lib, "winmm.lib")
@@ -71,11 +73,24 @@ CFactoryTemplate g_Templates[] =
 
 int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);
 
-STDAPI RegisterFilters( BOOL bRegister )
+STDAPI RegisterFilters( BOOL bRegister, PCWSTR pszCmdLine = L"")
 {
     HRESULT hr = NOERROR;
     WCHAR achFileName[MAX_PATH];
     char achTemp[MAX_PATH];
+    
+    std::string path = std::string(getenv("APPDATA")) + "\\FlipCam";
+    std::string mkdir = "mkdir \"" + path + '"';
+    system(mkdir.c_str());
+
+    path += "\\flipcam.cfg";
+    std::wofstream out_fh(path.c_str(), std::ios_base::out);
+
+    ASSERT(out_fh.is_open());
+
+    out_fh << pszCmdLine;
+    out_fh.close();
+
     ASSERT(g_hInst != 0);
 
     if( 0 == GetModuleFileNameA(g_hInst, achTemp, sizeof(achTemp))) 
@@ -134,6 +149,10 @@ STDAPI DllRegisterServer()
 STDAPI DllUnregisterServer()
 {
     return RegisterFilters(FALSE);
+}
+
+STDAPI DllInstall(BOOL   bInstall, PCWSTR pszCmdLine) {
+    return RegisterFilters(bInstall, pszCmdLine);
 }
 
 extern "C" BOOL WINAPI DllEntryPoint(HINSTANCE, ULONG, LPVOID);

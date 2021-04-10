@@ -208,6 +208,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="config.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Filters.cpp" />
     <ClCompile Include="gfx.cpp" />
@@ -216,6 +217,7 @@
     <CustomBuild Include="FlipCam.def" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="config.h" />
     <ClInclude Include="Filters.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="gfx.h" />
