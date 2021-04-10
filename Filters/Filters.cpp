@@ -107,7 +107,6 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
     gfx.fillScren(0, 0x55, 0x55);
 
     if (fc_config->debug) {
-        
         static float dbg_x = 0;
         static float dbg_y = 0;
         static int dbg_r = rand();
