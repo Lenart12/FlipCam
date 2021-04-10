@@ -59,7 +59,7 @@ void Gfx::putRect(int x0, int y0, int w, int h, uint8_t r, uint8_t g, uint8_t b)
 
 void Gfx::fillScren(uint8_t r, uint8_t g, uint8_t b)
 {
-	size_t buffSize = width * 3 * height;
+	size_t buffSize = (size_t)width * 3 * height;
 	for (size_t i = 0; i < buffSize; i += 3) {
 		buffer[i + 2] = r;
 		buffer[i + 1] = g;

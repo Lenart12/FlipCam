@@ -1,6 +1,3 @@
-#pragma warning(disable:4244)
-#pragma warning(disable:4711)
-
 #include <streams.h>
 #include <stdio.h>
 #include <olectl.h>
@@ -46,7 +43,10 @@ HRESULT CVCam::QueryInterface(REFIID riid, void** ppv)
 CVCamStream::CVCamStream(HRESULT* phr, CVCam* pParent, LPCWSTR pPinName) :
     CSourceStream(NAME("Virtual Cam"), phr, pParent, pPinName), m_pParent(pParent)
 {
-    std::string path = std::string(getenv("APPDATA")) + "\\FlipCam";
+    char* appdata = nullptr;
+    _dupenv_s(&appdata, nullptr, "APPDATA");
+    ASSERT(appdata);
+    std::string path = std::string(appdata) + "\\FlipCam";
 
     std::string configPath = path + "\\flipcam.cfg";
     std::wifstream conf_fh(configPath, std::ios_base::in);
@@ -112,6 +112,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
     gfx.fillScren(0, 0x55, 0x55);
 
     if (fc_config->dvd) {
+#pragma warning(disable: 4244)
         static float dbg_x = 0;
         static float dbg_y = 0;
         static int dbg_r = rand();
@@ -141,6 +142,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
             dbg_g = rand();
             dbg_b = rand();
         }
+#pragma warning(default:4244)
     }
     if (fc_config->debug) {
         
@@ -156,7 +158,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
             char configuration[] = "release";
         #endif // DEBUG
 
-        sprintf(debugln, "FlipCam v0.1 %s/%s\nres:%dx%d@%lldfps\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms",
+        sprintf_s(debugln, sizeof(debugln)/sizeof(char), "FlipCam v0.1 %s/%s\nres:%dx%d@%lldfps\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms",
             platform, configuration, w, h, 10000000 / fc_config->timePerFrame, fc_config->vFlip, fc_config->hFlip, rtNow, drawTime);
         gfx.putText(0, 0, debugln, 0xff, 0x00, 0x00, true);
     }

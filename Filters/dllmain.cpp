@@ -71,6 +71,13 @@ CFactoryTemplate g_Templates[] =
 
 };
 
+REGFILTER2 rf2FilterReg = {
+    1,                  // Version 1 (no pin mediums or pin category).
+    MERIT_DO_NOT_USE,   // Merit.
+    1,                  // Number of pins.
+    &AMSPinVCam         // Pointer to pin information.
+};
+
 int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);
 
 STDAPI RegisterFilters( BOOL bRegister, PCWSTR pszCmdLine = L"")
@@ -78,8 +85,11 @@ STDAPI RegisterFilters( BOOL bRegister, PCWSTR pszCmdLine = L"")
     HRESULT hr = NOERROR;
     WCHAR achFileName[MAX_PATH];
     char achTemp[MAX_PATH];
-    
-    std::string path = std::string(getenv("APPDATA")) + "\\FlipCam";
+
+    char* appdata = nullptr;
+    _dupenv_s(&appdata, nullptr, "APPDATA");
+    ASSERT(appdata);
+    std::string path = std::string(appdata) + "\\FlipCam";
     std::string mkdir = "mkdir \"" + path + '"';
     system(mkdir.c_str());
 
@@ -114,12 +124,8 @@ STDAPI RegisterFilters( BOOL bRegister, PCWSTR pszCmdLine = L"")
             if(bRegister)
             {
                 IMoniker *pMoniker = 0;
-                REGFILTER2 rf2;
-                rf2.dwVersion = 1;
-                rf2.dwMerit = MERIT_DO_NOT_USE;
-                rf2.cPins = 1;
-                rf2.rgPins = &AMSPinVCam;
-                hr = fm->RegisterFilter(CLSID_VirtualCam, L"FlipCam", &pMoniker, &CLSID_VideoInputDeviceCategory, NULL, &rf2);
+                
+                hr = fm->RegisterFilter(CLSID_VirtualCam, L"FlipCam", &pMoniker, &CLSID_VideoInputDeviceCategory, NULL, &rf2FilterReg);
             }
             else
             {
