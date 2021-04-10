@@ -86,20 +86,22 @@ STDAPI RegisterFilters( BOOL bRegister, PCWSTR pszCmdLine = L"")
     WCHAR achFileName[MAX_PATH];
     char achTemp[MAX_PATH];
 
-    char* appdata = nullptr;
-    _dupenv_s(&appdata, nullptr, "APPDATA");
-    ASSERT(appdata);
-    std::string path = std::string(appdata) + "\\FlipCam";
-    std::string mkdir = "mkdir \"" + path + '"';
-    system(mkdir.c_str());
+    if (pszCmdLine != L"") {
+        char* appdata = nullptr;
+        _dupenv_s(&appdata, nullptr, "APPDATA");
+        ASSERT(appdata);
+        std::string path = std::string(appdata) + "\\FlipCam";
+        std::string mkdir = "mkdir \"" + path + '"';
+        system(mkdir.c_str());
 
-    path += "\\flipcam.cfg";
-    std::wofstream out_fh(path.c_str(), std::ios_base::out);
+        path += "\\flipcam.cfg";
+        std::wofstream out_fh(path.c_str(), std::ios_base::out);
 
-    ASSERT(out_fh.is_open());
+        ASSERT(out_fh.is_open());
 
-    out_fh << pszCmdLine;
-    out_fh.close();
+        out_fh << pszCmdLine;
+        out_fh.close();
+    }
 
     ASSERT(g_hInst != 0);
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config.h"
+#include "grabber.h"
 
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
@@ -69,6 +70,7 @@ public:
 private:
     CVCam *m_pParent;
     FlipCamConfig* fc_config;
+    Grabber* grab;
     REFERENCE_TIME m_rtLastTime;
     HBITMAP m_hLogoBmp;
     CCritSec m_cSharedState;

@@ -60,11 +60,15 @@ CVCamStream::CVCamStream(HRESULT* phr, CVCam* pParent, LPCWSTR pPinName) :
     else {
         fc_config = new FlipCamConfig();
     }
+    HRESULT hr;
+    grab = new Grabber(fc_config->webcamSource, hr);
     GetMediaType(4, &m_mt);
 }
 
 CVCamStream::~CVCamStream()
 {
+    delete fc_config;
+    delete grab;
 }
 
 HRESULT CVCamStream::QueryInterface(REFIID riid, void** ppv)
@@ -116,13 +120,13 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
     std::string err = "";
 
     HRESULT hr = S_OK;
-    Grabber grab(fc_config->webcamSource, hr);
+    
     if (FAILED(hr)) goto done;
 
     BYTE* webcam = NULL;
     long webSize = NULL;
     VIDEOINFOHEADER* pVih = NULL;
-    grab.GetSample(webcam, webSize, pVih);
+    grab->GetSample(webcam, webSize, pVih);
     if (FAILED(hr)) goto done;
 
     if(FAILED(hr))
@@ -141,11 +145,11 @@ done:
         static int dbg_b = rand();
         static int v_x = 1;
         static int v_y = 1;
-        const  int dvd_w = 24 * 3;
+        const  int dvd_w = 24 * 5;
         const  int dvd_h = 32;
         static float time_step = fc_config->timePerFrame / 100000.0;
 
-        gfx.putText(dbg_x, dbg_y, "DVD", dbg_r, dbg_g, dbg_b, true);
+        gfx.putText(dbg_x, dbg_y, " DVD ", dbg_r, dbg_g, dbg_b, true);
         dbg_x += v_x * time_step;
         dbg_y += v_y * time_step;
 
@@ -179,7 +183,7 @@ done:
             char configuration[] = "release";
         #endif // DEBUG
 
-        sprintf_s(debugln, sizeof(debugln)/sizeof(char), "FlipCam v0.1 %s/%s\nres:%dx%d@%lldfps\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms\n%s",
+        sprintf_s(debugln, sizeof(debugln)/sizeof(char), "FlipCam v0.3 %s/%s\nres:%dx%d@%lldfps\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms\n%s",
             platform, configuration, w, h, 10000000 / fc_config->timePerFrame, fc_config->vFlip, fc_config->hFlip, rtNow, drawTime, err.c_str());
         gfx.putText(0, 0, debugln, 0xff, 0x00, 0x00, true);
     }

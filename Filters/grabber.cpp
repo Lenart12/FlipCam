@@ -223,6 +223,7 @@ Grabber::Grabber(IBaseFilter* source, HRESULT &hr)
     if (FAILED(hr)) return;
     hr = BuildFilterGraph();
     if (FAILED(hr)) return;
+    canSample = true;
 }
 
 Grabber::~Grabber() {
@@ -239,6 +240,8 @@ Grabber::~Grabber() {
 
 HRESULT Grabber::GetSample(BYTE* &pBuffer, long &pBufferSize, VIDEOINFOHEADER* &pVih)
 {
+    if (!canSample) return E_FAIL;
+
     HRESULT hr = pControl->Run();
     long evCode;
     hr = pEvent->WaitForCompletion(INFINITE, &evCode);

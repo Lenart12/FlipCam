@@ -14,6 +14,8 @@ class Grabber {
     IPin* pPin = NULL;
     IBaseFilter* pNullF = NULL;
 
+    bool canSample = false;
+
     HRESULT CreateFilterGraphManager();
     HRESULT AddSampleGrabberToFilterGraph();
     HRESULT SetMediaType();
