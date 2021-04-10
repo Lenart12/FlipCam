@@ -12,6 +12,7 @@ public:
 	bool hFlip = false;
 
 	bool debug = false;
+	bool dvd   = false;
 
 	FlipCamConfig();
 	FlipCamConfig(const std::wstring& cfg);

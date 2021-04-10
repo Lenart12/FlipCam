@@ -49,6 +49,9 @@ FlipCamConfig::FlipCamConfig(const std::wstring& cfg)
 			else if (kvp[0] == L"debug") {
 				this->debug = true;
 			}
+			else if (kvp[0] == L"dvd") {
+				this->dvd = true;
+			}
 		}
 	}
 }

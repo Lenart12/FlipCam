@@ -87,6 +87,11 @@ HRESULT CVCamStream::QueryInterface(REFIID riid, void** ppv)
 
 HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
 {
+    SYSTEMTIME time;
+    GetSystemTime(&time);
+    static LONG drawTime = 0;
+    LONG start_time = (time.wSecond * 1000) + time.wMilliseconds;
+
     DECLARE_PTR(VIDEOINFOHEADER, pvi, m_mt.pbFormat);
     ASSERT(pvi);
 
@@ -106,7 +111,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
     Gfx gfx(pData, w, h);
     gfx.fillScren(0, 0x55, 0x55);
 
-    if (fc_config->debug) {
+    if (fc_config->dvd) {
         static float dbg_x = 0;
         static float dbg_y = 0;
         static int dbg_r = rand();
@@ -136,12 +141,29 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
             dbg_g = rand();
             dbg_b = rand();
         }
+    }
+    if (fc_config->debug) {
         
-        char debugln[60];
-        sprintf(debugln, "res:%dx%d@%lldfps\nvflip:%d\nhflip:%d\nrtNow:%lld", w, h, 10000000 / fc_config->timePerFrame, fc_config->vFlip, fc_config->hFlip, rtNow);
+        char debugln[100];
+        #ifdef _WIN64
+            char platform[] = "x64";
+        #else
+            char platform[] = "x86";
+        #endif // _WIN64
+        #ifdef DEBUG
+            char configuration[] = "debug";
+        #else
+            char configuration[] = "release";
+        #endif // DEBUG
+
+        sprintf(debugln, "FlipCam v0.1 %s/%s\nres:%dx%d@%lldfps\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms",
+            platform, configuration, w, h, 10000000 / fc_config->timePerFrame, fc_config->vFlip, fc_config->hFlip, rtNow, drawTime);
         gfx.putText(0, 0, debugln, 0xff, 0x00, 0x00, true);
     }
 
+    GetSystemTime(&time);
+    LONG end_time = (time.wSecond * 1000) + time.wMilliseconds;
+    drawTime = end_time - start_time;
 
     return NOERROR;
 } // FillBuffer
