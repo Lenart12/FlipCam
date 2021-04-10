@@ -14,6 +14,8 @@ public:
 	bool debug = false;
 	bool dvd   = false;
 
+	IBaseFilter* webcamSource = NULL;
+
 	FlipCamConfig();
 	FlipCamConfig(const std::wstring& cfg);
 };

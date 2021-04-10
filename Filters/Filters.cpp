@@ -3,7 +3,9 @@
 #include <olectl.h>
 #include <dvdmedia.h>
 #include <fstream>
+#include <system_error>
 #include "filters.h"
+#include "grabber.h"
 #include "gfx.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -108,8 +110,27 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
 
     int w = pvi->bmiHeader.biWidth;
     int h = pvi->bmiHeader.biHeight;
+
     Gfx gfx(pData, w, h);
-    gfx.fillScren(0, 0x55, 0x55);
+
+    std::string err = "";
+
+    HRESULT hr = S_OK;
+    Grabber grab(fc_config->webcamSource, hr);
+    if (FAILED(hr)) goto done;
+
+    BYTE* webcam = NULL;
+    long webSize = NULL;
+    VIDEOINFOHEADER* pVih = NULL;
+    grab.GetSample(webcam, webSize, pVih);
+    if (FAILED(hr)) goto done;
+
+    if(FAILED(hr))
+done:
+        err = "error:" + std::system_category().message(hr);
+
+
+    //gfx.fillScren(0, 0x55, 0x55);
 
     if (fc_config->dvd) {
 #pragma warning(disable: 4244)
@@ -144,9 +165,9 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
         }
 #pragma warning(default:4244)
     }
-    if (fc_config->debug) {
+    if (fc_config->debug || err.length() > 0) {
         
-        char debugln[100];
+        char debugln[150];
         #ifdef _WIN64
             char platform[] = "x64";
         #else
@@ -158,8 +179,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
             char configuration[] = "release";
         #endif // DEBUG
 
-        sprintf_s(debugln, sizeof(debugln)/sizeof(char), "FlipCam v0.1 %s/%s\nres:%dx%d@%lldfps\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms",
-            platform, configuration, w, h, 10000000 / fc_config->timePerFrame, fc_config->vFlip, fc_config->hFlip, rtNow, drawTime);
+        sprintf_s(debugln, sizeof(debugln)/sizeof(char), "FlipCam v0.1 %s/%s\nres:%dx%d@%lldfps\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms\n%s",
+            platform, configuration, w, h, 10000000 / fc_config->timePerFrame, fc_config->vFlip, fc_config->hFlip, rtNow, drawTime, err.c_str());
         gfx.putText(0, 0, debugln, 0xff, 0x00, 0x00, true);
     }
 

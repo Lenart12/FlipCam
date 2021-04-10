@@ -14,6 +14,14 @@ class Grabber {
     IPin* pPin = NULL;
     IBaseFilter* pNullF = NULL;
 
+    HRESULT CreateFilterGraphManager();
+    HRESULT AddSampleGrabberToFilterGraph();
+    HRESULT SetMediaType();
+    HRESULT BuildFilterGraph();
+
 public:
-    Grabber();
+    Grabber(IBaseFilter* source, HRESULT &hr);
+    ~Grabber();
+
+    HRESULT GetSample(BYTE* &pBuffer, long &pBufferSize, VIDEOINFOHEADER* &pVih);
 };

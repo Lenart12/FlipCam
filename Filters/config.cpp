@@ -18,6 +18,60 @@ const std::vector<std::wstring> explode(const std::wstring& s, const wchar_t& c)
 	return v;
 }
 
+IBaseFilter* getDeviceByFriendlyName(const std::wstring& name) {
+	// Create the System Device Enumerator.
+	IBaseFilter* pSourceF = NULL;
+
+	ICreateDevEnum* pDevEnum;
+	HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL,
+		CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
+	if (FAILED(hr)) goto done;
+
+	IEnumMoniker* pEnum = NULL;
+	hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &pEnum, 0);
+	pDevEnum->Release();
+	if (FAILED(hr)) goto done;
+
+	IMoniker* pMoniker = NULL;
+
+	while (pEnum->Next(1, &pMoniker, NULL) == S_OK) {
+		IPropertyBag* pPropBag;
+		HRESULT hr = pMoniker->BindToStorage(0, NULL, IID_PPV_ARGS(&pPropBag));
+		if (FAILED(hr))
+		{
+			pMoniker->Release();
+			continue;
+		}
+
+		VARIANT var;
+		VariantInit(&var);
+
+		// Get description or friendly name.
+		hr = pPropBag->Read(L"FriendlyName", &var, 0);
+		if (FAILED(hr))	{
+			hr = pPropBag->Read(L"Description", &var, 0);
+		}
+		bool toBreak = false;
+		if (SUCCEEDED(hr))
+		{
+			if (lstrcmpW(name.c_str(), var.bstrVal) == 0) {
+				hr = pMoniker->BindToObject(0, 0, IID_IBaseFilter, (void**)&pSourceF);
+				if (SUCCEEDED(hr)) {
+					toBreak = true;
+				}
+			}
+		}
+		VariantClear(&var);
+		pPropBag->Release();
+		pMoniker->Release();
+		if (toBreak) break;
+	}
+
+	pEnum->Release();
+done:
+	return pSourceF;
+}
+
 FlipCamConfig::FlipCamConfig(){}
 
 FlipCamConfig::FlipCamConfig(const std::wstring& cfg)
@@ -38,7 +92,11 @@ FlipCamConfig::FlipCamConfig(const std::wstring& cfg)
 					this->height = std::stoi(res[1]) / 4;
 					this->timePerFrame = 10000000 / std::stoi(res[2]);
 				}
-			} 
+			}
+			// device:friendly name
+			else if (kvp[0] == L"device") {
+				this->webcamSource = getDeviceByFriendlyName(kvp[1]);
+			}
 		} else if (kvp.size() == 1) {
 			if (kvp[0] == L"vflip") {
 				this->vFlip = true;
