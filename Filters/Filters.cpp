@@ -129,6 +129,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
     grab->GetSample(webcam, webSize, pVih);
     if (FAILED(hr)) goto done;
 
+    gfx.ingest(webcam, 1920, 1080, fc_config->vFlip, fc_config->hFlip);
+
     if(FAILED(hr))
 done:
         err = "error:" + std::system_category().message(hr);
@@ -183,8 +185,8 @@ done:
             char configuration[] = "release";
         #endif // DEBUG
 
-        sprintf_s(debugln, sizeof(debugln)/sizeof(char), "FlipCam v0.3 %s/%s\nres:%dx%d@%lldfps\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms\n%s",
-            platform, configuration, w, h, 10000000 / fc_config->timePerFrame, fc_config->vFlip, fc_config->hFlip, rtNow, drawTime, err.c_str());
+        sprintf_s(debugln, sizeof(debugln)/sizeof(char), "FlipCam v0.3 %s/%s\nres:%dx%d@%lldfps\nsrc:%dx%d\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms\n%s",
+            platform, configuration, w, h, 10000000 / fc_config->timePerFrame, 1920, 1080, fc_config->vFlip, fc_config->hFlip, rtNow, drawTime, err.c_str());
         gfx.putText(0, 0, debugln, 0xff, 0x00, 0x00, true);
     }
 

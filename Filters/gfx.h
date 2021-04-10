@@ -16,5 +16,6 @@ public:
 	void putText(int x, int y, const char* text, uint8_t r, uint8_t g, uint8_t b, bool background = false);
 	void putRect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b);
 
+	void ingest(BYTE* pData, LONG oWidth, LONG oHeight, bool vFlip, bool hFlip);
 	void fillScren(uint8_t r, uint8_t g, uint8_t b);
 };

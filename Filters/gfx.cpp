@@ -57,6 +57,21 @@ void Gfx::putRect(int x0, int y0, int w, int h, uint8_t r, uint8_t g, uint8_t b)
 	}
 }
 
+void Gfx::ingest(BYTE* pData, LONG oWidth, LONG oHeight, bool vFlip, bool hFlip) {
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			//long bufferFrom = (((oHeight - 1) - (y/height)*oHeight) * oWidth + (x/width)*oWidth) * 3;
+			long bufferFrom = 0;
+			long bufferTo = (((height - 1) - y) * width + x) * 3;
+
+			buffer[bufferTo + 2] = pData[bufferFrom + 2];
+			buffer[bufferTo + 1] = pData[bufferFrom + 1];
+			buffer[bufferTo + 0] = pData[bufferFrom + 0];
+		}
+	}
+
+}
+
 void Gfx::fillScren(uint8_t r, uint8_t g, uint8_t b)
 {
 	size_t buffSize = (size_t)width * 3 * height;
