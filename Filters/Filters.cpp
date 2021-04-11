@@ -60,15 +60,12 @@ CVCamStream::CVCamStream(HRESULT* phr, CVCam* pParent, LPCWSTR pPinName) :
     else {
         fc_config = new FlipCamConfig();
     }
-    HRESULT hr;
-    grab = new Grabber(fc_config->webcamSource, hr);
     GetMediaType(4, &m_mt);
 }
 
 CVCamStream::~CVCamStream()
 {
     delete fc_config;
-    delete grab;
 }
 
 HRESULT CVCamStream::QueryInterface(REFIID riid, void** ppv)
@@ -118,25 +115,25 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
     Gfx gfx(pData, w, h);
 
     std::string err = "";
+    BYTE* webcam = NULL;
+    long webSize = 0;
+    VIDEOINFOHEADER* pVih = NULL;
 
     HRESULT hr = S_OK;
-    
+    static Grabber grab(fc_config->webcamSource, hr);
     if (FAILED(hr)) goto done;
 
-    BYTE* webcam = NULL;
-    long webSize = NULL;
-    VIDEOINFOHEADER* pVih = NULL;
-    grab->GetSample(webcam, webSize, pVih);
-    if (FAILED(hr)) goto done;
+    hr = grab.GetSample(webcam, webSize, pVih);
+    if (FAILED(hr) || webSize == 0 || pVih == NULL) goto done;
 
-    gfx.ingest(webcam, 1920, 1080, fc_config->vFlip, fc_config->hFlip);
+    gfx.ingest(webcam, pVih->bmiHeader.biWidth, pVih->bmiHeader.biHeight, fc_config->vFlip, fc_config->hFlip);
 
     if(FAILED(hr))
 done:
         err = "error:" + std::system_category().message(hr);
 
-
-    //gfx.fillScren(0, 0x55, 0x55);
+    CoTaskMemFree(webcam);
+    CoTaskMemFree(pVih);
 
     if (fc_config->dvd) {
 #pragma warning(disable: 4244)
@@ -173,7 +170,7 @@ done:
     }
     if (fc_config->debug || err.length() > 0) {
         
-        char debugln[150];
+        char debugln[300];
         #ifdef _WIN64
             char platform[] = "x64";
         #else
@@ -185,7 +182,7 @@ done:
             char configuration[] = "release";
         #endif // DEBUG
 
-        sprintf_s(debugln, sizeof(debugln)/sizeof(char), "FlipCam v0.3 %s/%s\nres:%dx%d@%lldfps\nsrc:%dx%d\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms\n%s",
+        sprintf_s(debugln, sizeof(debugln)/sizeof(char), "FlipCam v1.0 %s/%s\nres:%dx%d@%lldfps\nsrc:%dx%d\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms\n%s",
             platform, configuration, w, h, 10000000 / fc_config->timePerFrame, 1920, 1080, fc_config->vFlip, fc_config->hFlip, rtNow, drawTime, err.c_str());
         gfx.putText(0, 0, debugln, 0xff, 0x00, 0x00, true);
     }

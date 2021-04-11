@@ -156,7 +156,7 @@ HRESULT Grabber::AddSampleGrabberToFilterGraph()
 
     hr = pGrabberF->QueryInterface(IID_ISampleGrabber, (void**)(&pGrabber));
 
-    hr = pGrabber->SetOneShot(TRUE);
+    hr = pGrabber->SetOneShot(FALSE);
     if (FAILED(hr)) goto done;
 
     hr = pGrabber->SetBufferSamples(TRUE);
@@ -209,6 +209,8 @@ HRESULT Grabber::BuildFilterGraph()
         if (SUCCEEDED(hr)) break;
     }
 
+    hr = pControl->Run();
+
 done:
     return hr;
 }
@@ -242,13 +244,8 @@ HRESULT Grabber::GetSample(BYTE* &pBuffer, long &pBufferSize, VIDEOINFOHEADER* &
 {
     if (!canSample) return E_FAIL;
 
-    HRESULT hr = pControl->Run();
-    long evCode;
-    hr = pEvent->WaitForCompletion(INFINITE, &evCode);
-    if (FAILED(hr)) goto done;
-
     // Find the required buffer size.
-    hr = pGrabber->GetCurrentBuffer(&pBufferSize, NULL);
+    HRESULT hr = pGrabber->GetCurrentBuffer(&pBufferSize, NULL);
     if (FAILED(hr)) goto done;
 
     pBuffer = (BYTE*)CoTaskMemAlloc(pBufferSize);

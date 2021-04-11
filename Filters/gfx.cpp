@@ -58,11 +58,35 @@ void Gfx::putRect(int x0, int y0, int w, int h, uint8_t r, uint8_t g, uint8_t b)
 }
 
 void Gfx::ingest(BYTE* pData, LONG oWidth, LONG oHeight, bool vFlip, bool hFlip) {
-	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < width; x++) {
-			//long bufferFrom = (((oHeight - 1) - (y/height)*oHeight) * oWidth + (x/width)*oWidth) * 3;
-			long bufferFrom = 0;
-			long bufferTo = (((height - 1) - y) * width + x) * 3;
+	LONG xFrom;
+	LONG yFrom;
+
+	LONG bufferTo;
+	LONG bufferFrom;
+
+	LONG yIndexTo;
+	LONG yIndexFrom;
+
+	LONG xRatio = ((LONG)(oWidth << 16) / width) + 1;
+	LONG yRatio = ((LONG)(oHeight << 16) / height) + 1;
+
+	LONG mHeightTo = height - 1;
+	LONG mWidthTo = width - 1;
+	LONG mOHeightFrom = oHeight - 1;
+
+	for (int yTo = 0; yTo < height; yTo++) {
+		yFrom = (vFlip) ? mHeightTo - yTo : yTo;
+		yFrom = ((yFrom * yRatio) >> 16);
+
+		yIndexTo = (mHeightTo - yTo) * width;
+		yIndexFrom = (mOHeightFrom - yFrom) * oWidth;
+
+		for (int xTo = 0; xTo < width; xTo++) {
+			xFrom = (hFlip) ? mWidthTo - xTo : xTo;
+			xFrom = ((xFrom * xRatio) >> 16);
+
+			bufferTo = (yIndexTo + xTo) * 3;
+			bufferFrom = (yIndexFrom + xFrom) * 3;
 
 			buffer[bufferTo + 2] = pData[bufferFrom + 2];
 			buffer[bufferTo + 1] = pData[bufferFrom + 1];

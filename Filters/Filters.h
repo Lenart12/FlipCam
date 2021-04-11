@@ -70,11 +70,7 @@ public:
 private:
     CVCam *m_pParent;
     FlipCamConfig* fc_config;
-    Grabber* grab;
     REFERENCE_TIME m_rtLastTime;
-    HBITMAP m_hLogoBmp;
-    CCritSec m_cSharedState;
-    IReferenceClock *m_pClock;
 };
 
 
