@@ -1,34 +1,11 @@
-# DirectShow VCam
+# DirectShow FlipCam
 
-This repository contains [Vivek](https://groups.google.com/g/microsoft.public.win32.programmer.directx.video/c/1beZkSCb0KE/m/5VF366wR3CcJ)'s Capture Source Filter filter, a popular DirectShow sample project, which recently celebrated its 16th anniversary ([2005 posting reference](https://groups.google.com/g/microsoft.public.win32.programmer.directx.video/c/WRuNmZsWj-o/m/-l4sKR_2o-EJ)).
+This DirectShow filter is a virtual webcam that suports flipping video input horizontaly or verticaly. Originaly based from Viveks [VCam](https://github.com/roman380/tmhare.mvps.org-vcam).
 
-> Capture Source Filter filter (version 0.1) 86 KB zipped, includes binaries.  A sample source filter that emulates a video capture device contributed by Vivek (rep movsd from the public newsgroups).  Thanks Vivek!  TMH has not tested this filter yet.  Ask questions about this on microsoft.public.win32.programmer.directx.video.
-
-This was hosted on [The March Hare's](https://web.archive.org/web/20060813155608/http://tmhare.mvps.org/) website for quite some time, and now when the website is gone people don't know where to look for the source code. Here it goes!
-
-See also:
-
-* [How to build and run Vivek's Virtual Camera on Windows 10?](https://stackoverflow.com/a/65698434/868014)
-* [Errors in building Vivek's Virtual Camera on Windows 10?](https://stackoverflow.com/a/65758769/868014)
-
-## Updates
-
-Orignial source code is tagged by [original](https://github.com/roman380/tmhare.mvps.org-vcam/releases/tag/original) tag. In this state the project needs a bit of massaging to be beuilt.
-
-The head of the repository is updated for Virtual Studio 2019 Community builds.
-
-1. The project requires DirectShow BaseClasses, which is a part of Windows SDK moved to github. For this reason you need to pull https://github.com/roman380/Windows-classic-samples/tree/directshow/Samples/Win7Samples/multimedia/directshow (note branch "directshow") first and build the directshow.sln solution there (or at least BaseClasses project) first.
-2. Then, edit [directshow.props](directshow.props) and modify line with `WindowsClassicSamplesDir` to have it point to root of repository from step 1 above
-3. Then, open [vcam.sln](vcam.sln) and build this project
-
-Differences from original version:
-
-- output file name is Filters.dll (unlike original VCam.ax)
-- the project is extended to have `x64` platform configuration
 
 ## How to use
 
-Register dll using the command
+Register dll using the command, for **both x86 and x64**
 ```
 regsvr32 "$(SolutionDir)/bin/$(Platform)/$(Configuration)/FlipCam.dll"
 ```
@@ -36,11 +13,32 @@ and unregister with
 ```
 regsvr32 /u "$(SolutionDir)/bin/$(Platform)/$(Configuration)/FlipCam.dll"
 ```
+
+Configuration file is made when running the `regsvr32` command with the `/i:"configuration string"` option. Or edit it in `%appdata%/FlipCam/flipcam.cfg`
+
+Possible configurations:
+
+|Key|Value|Description|Default|
+-|-|-|-
+|res|WxHxFPS|Sets output resolution and framerate, can also be just WxH|1280x720x24
+|device|Friendly name|Sets the input device based on the device friendly name|not set|
+|vflip||Vertical flip|not set|
+|hflip||Horizontal flip|not set|
+|debug||Show debug information|not set|
+|dvd||Floating DVD icon bouncing around|not set|
+
+Multiple settings are seperated with `,` and settings that require a value are in format of `key:value`
+
+Example configuration string is 
+```
+res:1920x1080x60,device:GENERAL WEBCAM,hflip
+```
+
 ## or
 
 Use Widows 10 SDK GraphEdit or [GraphStudioNext](https://github.com/cplussharp/graph-studio-next).
 
-Locate "Virtual Cam" filter:
+Locate "FlipCam" filter:
 
 ![](README-01.png)
 
