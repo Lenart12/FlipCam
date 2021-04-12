@@ -8,6 +8,8 @@
 #include "grabber.h"
 #include "gfx.h"
 
+#include <synchapi.h>
+
 //////////////////////////////////////////////////////////////////////////
 //  CVCam is the source filter which masquerades as a capture device
 //////////////////////////////////////////////////////////////////////////
@@ -92,9 +94,16 @@ HRESULT CVCamStream::QueryInterface(REFIID riid, void** ppv)
 HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
 {
     SYSTEMTIME time;
+    static REFERENCE_TIME start_time = 0;
+    static REFERENCE_TIME end_time = 0;
+
+    LONG draw_time = end_time - start_time;
+
     GetSystemTime(&time);
-    static LONG drawTime = 0;
-    LONG start_time = (time.wSecond * 1000) + time.wMilliseconds;
+    start_time = ((REFERENCE_TIME)time.wSecond * 1000) + time.wMilliseconds;
+
+    LONG idle_time = start_time - end_time;
+
 
     DECLARE_PTR(VIDEOINFOHEADER, pvi, m_mt.pbFormat);
     ASSERT(pvi);
@@ -105,7 +114,9 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
     rtNow = m_rtLastTime;
     m_rtLastTime += avgFrameTime;
     pms->SetTime(&rtNow, &m_rtLastTime);
+    pms->SetMediaTime(&rtNow, &m_rtLastTime);
     pms->SetSyncPoint(TRUE);
+    pms->SetDiscontinuity(rtNow <= 1);
 
     BYTE* pData;
     pms->GetPointer(&pData);
@@ -191,14 +202,31 @@ HRESULT CVCamStream::FillBuffer(IMediaSample* pms)
             char configuration[] = "release";
         #endif // DEBUG
 
-        sprintf_s(debugln, sizeof(debugln)/sizeof(char), "FlipCam v1.1 %s/%s\nres:%dx%d@%lldfps\nsrc:%dx%d\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms\n%s",
-            platform, configuration, w, h, 10000000 / fc_config->timePerFrame, 1920, 1080, fc_config->vFlip, fc_config->hFlip, rtNow, drawTime, err.c_str());
+        int srcW = (pVih != NULL) ? pVih->bmiHeader.biWidth : 0;
+        int srcH = (pVih != NULL) ? pVih->bmiHeader.biHeight : 0;
+
+
+        sprintf_s(debugln, sizeof(debugln)/sizeof(char), "FlipCam v1.3 %s/%s\nres:%dx%d@%lldfps\nsrc:%dx%d\nvflip:%d\nhflip:%d\nrtNow:%lld\ndraw:%ldms\nidle:%ldms\nFPS:%f\n%s",
+            platform, configuration,
+            w, h, 10000000 / fc_config->timePerFrame,
+            srcW, srcH,
+            fc_config->vFlip, fc_config->hFlip,
+            rtNow,
+            draw_time,
+            idle_time,
+            1000.f / (draw_time + idle_time),
+            err.c_str());
         gfx.putText(10, 10, debugln, 215, 211, 203, true);
     }
 
     GetSystemTime(&time);
-    LONG end_time = (time.wSecond * 1000) + time.wMilliseconds;
-    drawTime = end_time - start_time;
+    end_time = ((REFERENCE_TIME)time.wSecond * 1000) + time.wMilliseconds;
+
+    LONG sleep_time = fc_config->timePerFrame / 10000 - (2 + end_time - start_time);
+
+    if (sleep_time >= 5 && sleep_time < fc_config->timePerFrame / 10000) {
+        SleepEx(sleep_time, false);
+    }
 
     return NOERROR;
 } // FillBuffer
