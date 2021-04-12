@@ -5,6 +5,8 @@ This DirectShow filter is a virtual webcam that suports flipping video input hor
 
 ## How to use
 
+Compile your own FlipCam.dll filters or **download** them [here](https://github.com/Lenart12/FlipCam/releases/).
+
 Register dll using the command, for **both x86 and x64**
 ```
 regsvr32 "$(SolutionDir)/bin/$(Platform)/$(Configuration)/FlipCam.dll"
