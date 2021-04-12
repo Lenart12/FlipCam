@@ -132,7 +132,7 @@ HRESULT ConnectFilters(
 
 HRESULT Grabber::CreateFilterGraphManager()
 {
-    HRESULT hr = CoCreateInstance(CLSID_FilterGraph, NULL,
+    HRESULT hr = CoCreateInstance(CLSID_FilterGraphNoThread, NULL,
         CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pGraph));
     if (FAILED(hr)) goto done;
 

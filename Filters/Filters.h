@@ -66,10 +66,12 @@ public:
     HRESULT GetMediaType(int iPosition, CMediaType *pmt);
     HRESULT SetMediaType(const CMediaType *pmt);
     HRESULT OnThreadCreate(void);
+    HRESULT OnThreadDestroy(void);
     
 private:
     CVCam *m_pParent;
     FlipCamConfig* fc_config;
+    Grabber* grab;
     REFERENCE_TIME m_rtLastTime;
 };
 
